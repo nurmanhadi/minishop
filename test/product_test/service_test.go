@@ -6,7 +6,6 @@ import (
 	_ "minishop/internal/config"
 	"minishop/internal/features/product"
 	"testing"
-	"time"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -31,7 +30,7 @@ func TestServGetProductById(t *testing.T) {
 	repo := product.NewProductRepository(db)
 	serv := product.NewProductService(&repo, ctx, validation)
 
-	product, err := serv.GetProductById("1")
+	product, err := serv.GetProductById("2")
 	if err != nil {
 		panic(err)
 	}
@@ -46,8 +45,8 @@ func TestServInsertProduct(t *testing.T) {
 		Sku:         "",
 		Name:        "",
 		Description: "",
-		// Price:       12000,
-		// Stock:       100,
+		Price:       12000,
+		Stock:       100,
 	}
 	err := serv.InsertProduct(body)
 	if err != nil {
@@ -58,11 +57,14 @@ func TestServUpdateProduct(t *testing.T) {
 	db := mariadb.Connection()
 	defer db.Close()
 	repo := product.NewProductRepository(db)
-	product := &product.Product{
-		Name:      "hura",
-		UpdatedAt: time.Now(),
+	serv := product.NewProductService(&repo, ctx, validation)
+	product := &product.ProductUpdateRequestDto{
+		Name:        "yarezo",
+		Description: "",
+		Price:       0,
+		Stock:       0,
 	}
-	err := repo.UpdateProduct(ctx, product, "2")
+	err := serv.UpdateProduct("2", product)
 	if err != nil {
 		panic(err)
 	}
@@ -71,8 +73,8 @@ func TestServDeleteProduct(t *testing.T) {
 	db := mariadb.Connection()
 	defer db.Close()
 	repo := product.NewProductRepository(db)
-
-	err := repo.DeleteProductById(ctx, "2")
+	serv := product.NewProductService(&repo, ctx, validation)
+	err := serv.DeleteProductById("2")
 	if err != nil {
 		panic(err)
 	}

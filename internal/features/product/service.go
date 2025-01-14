@@ -22,7 +22,7 @@ func (s *serviceImpl) GetAllProducts() ([]Product, error) {
 	}
 	return products, nil
 }
-func (s *serviceImpl) GetProductById(productId string) (*Product, error) {
+func (s *serviceImpl) GetProductById(productId *string) (*Product, error) {
 	product, err := s.repo.GetProductById(s.ctx, productId)
 	if err != nil {
 		return nil, exception.ProductNotFound
@@ -31,8 +31,7 @@ func (s *serviceImpl) GetProductById(productId string) (*Product, error) {
 }
 func (s *serviceImpl) InsertProduct(body *ProductAddRequestDto) error {
 	if err := s.validation.Struct(body); err != nil {
-		exception.ValidationError(err)
-		return exception.ProductValidationError
+		return &exception.ErrorValidation{Message: err.Error()}
 	}
 	id := uuid.New().String()
 	product := &Product{
@@ -46,6 +45,44 @@ func (s *serviceImpl) InsertProduct(body *ProductAddRequestDto) error {
 		UpdatedAt:   time.Now(),
 	}
 	err := s.repo.InsertProduct(s.ctx, product)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+func (s *serviceImpl) UpdateProduct(productId *string, body *ProductUpdateRequestDto) error {
+	if err := s.validation.Struct(body); err != nil {
+		return &exception.ErrorValidation{Message: err.Error()}
+	}
+	count, err := s.repo.CountProductById(s.ctx, productId)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return exception.ProductNotFound
+	}
+	product := &Product{
+		Name:        body.Name,
+		Description: body.Description,
+		Price:       body.Price,
+		Stock:       body.Stock,
+		UpdatedAt:   time.Now(),
+	}
+	if err := s.repo.UpdateProduct(s.ctx, product, productId); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *serviceImpl) DeleteProductById(productId *string) error {
+	count, err := s.repo.CountProductById(s.ctx, productId)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		return exception.ProductNotFound
+	}
+	err = s.repo.DeleteProductById(s.ctx, productId)
 	if err != nil {
 		return err
 	}

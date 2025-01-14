@@ -3,6 +3,7 @@ package product
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"minishop/pkg/infrastructure/query"
 )
@@ -33,7 +34,7 @@ func (r *repositoryImpl) GetAllProducts(ctx context.Context) ([]Product, error) 
 	}
 	return products, nil
 }
-func (r *repositoryImpl) GetProductById(ctx context.Context, productId string) (*Product, error) {
+func (r *repositoryImpl) GetProductById(ctx context.Context, productId *string) (*Product, error) {
 	product := new(Product)
 	stmt, err := r.db.PrepareContext(ctx, query.GetProductById)
 	if err != nil {
@@ -51,7 +52,7 @@ func (r *repositoryImpl) GetProductById(ctx context.Context, productId string) (
 			return nil, err
 		}
 	} else {
-		return nil, fmt.Errorf("product %s not found", productId)
+		return nil, fmt.Errorf("%s", err)
 	}
 	return product, nil
 }
@@ -63,35 +64,36 @@ func (r *repositoryImpl) InsertProduct(ctx context.Context, product *Product) er
 	defer stmt.Close()
 	_, err = stmt.ExecContext(ctx, product.Id, product.Sku, product.Name, product.Description, product.Price, product.Stock, product.CreateAt, product.UpdatedAt)
 	if err != nil {
-		return err
+		return fmt.Errorf("%s", err)
 	}
 	return nil
 }
-func (r *repositoryImpl) UpdateProduct(ctx context.Context, product *Product, productId string) error {
+func (r *repositoryImpl) UpdateProduct(ctx context.Context, product *Product, productId *string) error {
+	queryUpdate := "UPDATE products SET "
 	args := []interface{}{}
 	if product.Name != "" {
-		query.UpdateProduct += "name = ?, "
+		queryUpdate += "name = ?, "
 		args = append(args, product.Name)
 	}
 	if product.Description != "" {
-		query.UpdateProduct += "description = ?, "
+		queryUpdate += "description = ?, "
 		args = append(args, product.Description)
 	}
 	if product.Price != 0 {
-		query.UpdateProduct += "price = ?, "
+		queryUpdate += "price = ?, "
 		args = append(args, product.Price)
 	}
 	if product.Stock != 0 {
-		query.UpdateProduct += "stock = ?, "
+		queryUpdate += "stock = ?, "
 		args = append(args, product.Stock)
 	}
 	if !product.UpdatedAt.IsZero() {
-		query.UpdateProduct += "updated_at = ?, "
+		queryUpdate += "updated_at = ?, "
 		args = append(args, product.UpdatedAt)
 	}
-	query.UpdateProduct = query.UpdateProduct[:len(query.UpdateProduct)-2] + " WHERE id = ?"
+	queryUpdate = queryUpdate[:len(queryUpdate)-2] + " WHERE id = ?"
 	args = append(args, productId)
-	stmt, err := r.db.PrepareContext(ctx, query.UpdateProduct)
+	stmt, err := r.db.PrepareContext(ctx, queryUpdate)
 	if err != nil {
 		return err
 	}
@@ -102,19 +104,19 @@ func (r *repositoryImpl) UpdateProduct(ctx context.Context, product *Product, pr
 	}
 	return nil
 }
-func (r *repositoryImpl) DeleteProductById(ctx context.Context, productId string) error {
+func (r *repositoryImpl) DeleteProductById(ctx context.Context, productId *string) error {
 	stmt, err := r.db.PrepareContext(ctx, query.DeleteProductById)
 	if err != nil {
-		return err
+		return errors.New(err.Error())
 	}
 	defer stmt.Close()
 	_, err = stmt.ExecContext(ctx, productId)
 	if err != nil {
-		return err
+		return errors.New(err.Error())
 	}
 	return nil
 }
-func (r *repositoryImpl) CountProductById(ctx context.Context, productId string) (int, error) {
+func (r *repositoryImpl) CountProductById(ctx context.Context, productId *string) (int, error) {
 	var count int
 	stmt, err := r.db.PrepareContext(ctx, query.CountProductById)
 	if err != nil {

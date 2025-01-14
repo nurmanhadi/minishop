@@ -9,10 +9,10 @@
             "server": "localhost",
             "port": 3306,
             "driver": "MariaDB",
-            "name": "minishop",
+            "name": "Minishop",
             "database": "minishop",
             "username": "root",
-            "password": ""
+            "password": "admin"
         }
     ]
 }

@@ -3,14 +3,14 @@ app:
   version: 1.0.0
 server:
   port: 5090
-  timeout: 30
+  timeout: 5
   environment: development
 database:
   mariadb:
     host: localhost
     port: 3306
     user: root
-    password:
+    password: admin
     dbname: minishop
     max_idle_conns: 10
     max_open_conns: 100

@@ -13,3 +13,6 @@ func NewProductRepository(db *sql.DB) ProductRepository {
 func NewProductService(repo *ProductRepository, ctx context.Context, validation *validator.Validate) ProductService {
 	return &serviceImpl{repo: *repo, ctx: ctx, validation: validation}
 }
+func NewProductHandler(serv *ProductService) ProductHandler {
+	return &handlerImpl{serv: *serv}
+}
